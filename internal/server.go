@@ -23,10 +23,10 @@ func NewServer(instanceName string) *Server {
 }
 
 // Serve will make a server start listening on provided host and port
-func (s *Server) Serve(host string, port int) {
+func (s *Server) Serve(host, port string) {
 	router := s.routerSetup()
 
-	ipAndPort := fmt.Sprintf("%s:%d", host, port)
+	ipAndPort := fmt.Sprintf("%s:%s", host, port)
 	httpServer := &http.Server{
 		Handler:      router,
 		Addr:         ipAndPort,
