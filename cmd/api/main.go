@@ -42,7 +42,7 @@ func main() {
 
 	server := internal.NewServer(*instanceName)
 	go func() {
-		log.Debugf("server will be listening on: %s:%d", *host, *port)
+		log.Debugf("server will be listening on: %s:%s", *host, *port)
 		server.Serve(*host, *port)
 	}()
 
