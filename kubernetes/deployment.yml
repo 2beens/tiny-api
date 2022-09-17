@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tiny-api-deployment
+  labels:
+    app: tiny-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: tiny-api
+  template:
+    metadata:
+      labels:
+        app: tiny-api
+    spec:
+      containers:
+      - name: tiny-api
+        image: stubin87/tiny-api:v1.0
+        ports:
+        - containerPort: 9001
+        env:
+        - name: TINY_API_HOST
+          value: "0.0.0.0"
+        - name: TINY_API_INSTANCE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+---
+# make the tiny api accessible from the outside
+apiVersion: v1
+kind: Service
+metadata:
+  name: tiny-api-service
+spec:
+  selector:
+    app: tiny-api
+  type: LoadBalancer  
+  ports:
+    - protocol: TCP
+      port: 9001
+      targetPort: 9001
+      nodePort: 30000
