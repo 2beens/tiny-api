@@ -42,6 +42,7 @@ func (s *Server) routerSetup() *mux.Router {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/ping", s.reqHandler.HandlePing).Methods("GET")
+	router.HandleFunc("/health", s.reqHandler.HandleHealth).Methods("GET")
 	router.HandleFunc("/", s.reqHandler.HandleRootRequest).Methods("GET")
 
 	// add a small middleware function to log request details
