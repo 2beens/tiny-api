@@ -40,9 +40,11 @@ func (h *RequestHandler) HandleHarakiri(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusAccepted)
 	w.Write([]byte("killing myself..."))
 	
-	// wait a bit for the response to be sent
-	time.Sleep(time.Second)
-	os.Exit(1)
+	go func() {
+		// wait a bit for the response to be sent
+		time.Sleep(time.Second)
+		os.Exit(1)		
+	}()
 }
 
 func (h *RequestHandler) HandleHealth(w http.ResponseWriter, r *http.Request) {
