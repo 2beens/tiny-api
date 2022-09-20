@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Docker Image Creation and K8S Config Update
 
 on:
   release:
@@ -8,21 +8,40 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Set up QEMU
+      - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
-      -
-        name: Set up Docker Buildx
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-      -
-        name: Login to DockerHub
+      - name: Login to DockerHub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      -
-        name: Build and push
+      - name: Build and push
         uses: docker/build-push-action@v3
         with:
           push: true
           tags: stubin87/tiny-api:${{ github.event.release.tag_name }}
+  
+  k8s-config-update:
+    runs-on: ubuntu-latest
+    needs: docker
+    steps:
+      - name: update-k8s-config
+        env:
+          PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        run: |
+          git clone https://2beens:$PERSONAL_ACCESS_TOKEN@github.com/2beens/tiny-api-k8s
+
+          cd tiny-api-k8s/kubernetes
+          git config user.name "Serj Tubin (github actions bot)"
+          git config user.email "stubin87@gmail.com"
+
+          # make the change
+          sed -i '' -e 's#.*image: stubin87/tiny-api:.*#        image: stubin87/tiny-api:${{ github.event.release.tag_name }}#' deployment.yaml
+          
+          git add --all
+          git commit -m "k8s deployment update for version ${{ github.event.release.tag_name }}"
+
+          # push to master
+          git push
