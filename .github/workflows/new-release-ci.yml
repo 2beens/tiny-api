@@ -42,7 +42,7 @@ jobs:
           echo "making the change: stubin87/tiny-api:${{ github.event.release.tag_name }}"
 
           # make the change
-          sed -i '' -e 's#.*image: stubin87/tiny-api:.*#        image: stubin87/tiny-api:${{ github.event.release.tag_name }}#' deployment.yaml
+          sed -i -e 's#.*image: stubin87/tiny-api:.*#        image: stubin87/tiny-api:${{ github.event.release.tag_name }}#' deployment.yaml
           
           git add --all
           git commit -m "k8s deployment update for version ${{ github.event.release.tag_name }}"
