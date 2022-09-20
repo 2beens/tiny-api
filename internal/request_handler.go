@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"net/http"
+	"time"
 
 	"github.com/2beens/tiny-api/pkg"
 
@@ -35,6 +36,12 @@ func (h *RequestHandler) HandlePing(w http.ResponseWriter, r *http.Request) {
 
 func (h *RequestHandler) HandleHarakiri(w http.ResponseWriter, r *http.Request) {
 	log.Println("killing myself ...")
+	
+	w.WriteHeader(http.StatusAccepted)
+	w.Write([]byte("killing myself..."))
+	
+	// wait a bit for the response to be sent
+	time.Sleep(time.Second)
 	os.Exit(1)
 }
 
