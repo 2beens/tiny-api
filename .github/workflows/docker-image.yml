@@ -33,12 +33,12 @@ jobs:
         run: |
           git clone https://2beens:$PERSONAL_ACCESS_TOKEN@github.com/2beens/tiny-api-k8s
 
-          cd tiny-api-k8s
+          cd tiny-api-k8s/kubernetes
           git config user.name "Serj Tubin (github actions bot)"
           git config user.email "stubin87@gmail.com"
 
-          # TODO: make changes
-          # 
+          # make the change
+          cat  | sed -e 's#.*image: stubin87/tiny-api:[[:alnum:]]*#\timage: stubin87/tiny-api:${{ github.event.release.tag_name }}#' deployment.yml
           
           git add --all
           git commit -m "k8s deployment update for version ${{ github.event.release.tag_name }}"
