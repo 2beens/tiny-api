@@ -36,6 +36,10 @@ jobs:
           cd tiny-api-k8s/kubernetes
           git config user.name "Serj Tubin (github actions bot)"
           git config user.email "stubin87@gmail.com"
+          
+          echo "location: $(pwd)"
+          ls -lah
+          echo "making the change: stubin87/tiny-api:${{ github.event.release.tag_name }}"
 
           # make the change
           sed -i '' -e 's#.*image: stubin87/tiny-api:.*#        image: stubin87/tiny-api:${{ github.event.release.tag_name }}#' deployment.yaml
