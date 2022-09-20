@@ -44,8 +44,13 @@ jobs:
           # make the change
           sed -i -e 's#.*image: stubin87/tiny-api:.*#        image: stubin87/tiny-api:${{ github.event.release.tag_name }}#' deployment.yaml
           
+          echo "committing the change ..."
+          git diff | grep '^[+-][^+-]'
           git add --all
           git commit -m "k8s deployment update for version ${{ github.event.release.tag_name }}"
 
           # push to master
+          echo "pushing the changes ..."
           git push
+
+          echo "done <3"
