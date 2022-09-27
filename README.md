@@ -8,4 +8,4 @@ Kubernetes 🚢 and ArgoCD 🐙 config files are located in the [2beens/tiny-api
 Using [actions/build-and-push-docker-images](https://github.com/marketplace/actions/build-and-push-docker-images) to build and push new docker images to [my dockerhub](https://hub.docker.com/repository/docker/stubin87/tiny-api).
   - only on new releases!
   
-Tint API Web client in Vue can be found here: [2beens/tiny-api-web-client](https://github.com/2beens/tiny-api-web-client).
+Tiny API Web client in Vue can be found here: [2beens/tiny-api-web-client](https://github.com/2beens/tiny-api-web-client).
