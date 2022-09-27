@@ -48,6 +48,7 @@ func (s *Server) routerSetup() *mux.Router {
 
 	// add a small middleware function to log request details
 	router.Use(pkg.LogRequest())
+	router.Use(pkg.Cors())
 
 	return router
 }
