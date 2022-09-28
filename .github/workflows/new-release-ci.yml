@@ -41,9 +41,9 @@ jobs:
           git config user.email "stubin87@gmail.com"
           
           # make the change
-          echo "updating kubernetes/deployment.yaml to use: stubin87/tiny-api:${{ github.event.release.tag_name }}"
-          # sed -i -e 's#.*image: stubin87/tiny-api:.*#        image: stubin87/tiny-api:${{ github.event.release.tag_name }}#' kubernetes/deployment.yaml
-          yq -i '(. | select(.kind == "Deployment") | .spec.template.spec.containers[0].image) = "stubin87/tiny-api:${{ github.event.release.tag_name }}"' kubernetes/deployment.yaml
+          echo "updating kubernetes-tiny-api/deployment.yaml to use: stubin87/tiny-api:${{ github.event.release.tag_name }}"
+          # sed -i -e 's#.*image: stubin87/tiny-api:.*#        image: stubin87/tiny-api:${{ github.event.release.tag_name }}#' kubernetes-tiny-api/deployment.yaml
+          yq -i '(. | select(.kind == "Deployment") | .spec.template.spec.containers[0].image) = "stubin87/tiny-api:${{ github.event.release.tag_name }}"' kubernetes-tiny-api/deployment.yaml
 
           echo "updating tiny-api-chart/values.yaml to use: stubin87/tiny-api:${{ github.event.release.tag_name }}"
           yq -i '.image.tag = "${{ github.event.release.tag_name }}"' tiny-api-chart/values.yaml
