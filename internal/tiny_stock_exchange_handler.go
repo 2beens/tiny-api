@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/2beens/tiny-api/pkg"
@@ -78,33 +79,38 @@ func (h *TinyStockExchangeHandler) HandleNewValueDelta(w http.ResponseWriter, r 
 		return
 	}
 
-	// TODO: add ticker to delta
+	timestampParam := r.Form.Get("ts")
+	if timestampParam == "" {
+		http.Error(w, "error, timestamp empty", http.StatusBadRequest)
+		return
+	}
+	timestamp, err := strconv.ParseInt(timestampParam, 10, 64)
+	if err != nil {
+		http.Error(w, "error, timestamp invalid", http.StatusBadRequest)
+		return
+	}
 
-	// timestampParam := r.Form.Get("ts")
-	// if timestampParam == "" {
-	// 	http.Error(w, "error, timestamp empty", http.StatusBadRequest)
-	// 	return
-	// }
-	timestamp := 100000
-
-	// deltaParam := r.Form.Get("delta")
-	// if deltaParam == "" {
-	// 	http.Error(w, "error, delta empty", http.StatusBadRequest)
-	// 	return
-	// }
-	delta := 100
-
-	// TODO: timestamp must be int64
+	deltaParam := r.Form.Get("delta")
+	if deltaParam == "" {
+		http.Error(w, "error, delta empty", http.StatusBadRequest)
+		return
+	}
+	delta, err := strconv.ParseInt(deltaParam, 10, 64)
+	if err != nil {
+		http.Error(w, "error, value delta invalid", http.StatusBadRequest)
+		return
+	}
 
 	timeoutCtx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
 	res, err := h.tseClient.NewValueDelta(timeoutCtx, &tseProto.StockValueDelta{
-		Timestamp: int32(timestamp),
-		Delta:     int32(delta),
+		Ticker:    ticker,
+		Timestamp: timestamp,
+		Delta:     delta,
 	})
 	if err != nil {
-		log.Errorf("add stock: %s", err)
+		log.Errorf("add value delta: %s", err)
 		pkg.WriteErrorJsonResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -112,6 +118,6 @@ func (h *TinyStockExchangeHandler) HandleNewValueDelta(w http.ResponseWriter, r 
 	log.Printf("add new stock res: %s", res.GetMessage())
 	pkg.WriteJsonResponse(w, http.StatusOK, pkg.ApiResponse{
 		Result:  "ok",
-		Message: fmt.Sprintf("i[%s]: new value delta for %s added", h.instanceName, ticker),
+		Message: fmt.Sprintf("i[%s]: new value delta %d for %s added", h.instanceName, delta, ticker),
 	})
 }

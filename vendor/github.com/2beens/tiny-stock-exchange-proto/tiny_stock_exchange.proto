@@ -1,0 +1,40 @@
+// to generate go code from this proto:
+// protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative ./tiny_stock_exchange.proto
+
+syntax = "proto3";
+
+option go_package = "github.com/2beens/tiny-stock-exchange-proto";
+
+package tiny_stock_exchange;
+
+service TinyStockExchange {
+  rpc NewStock(Stock) returns (Result) {}
+  rpc RemoveStock(Stock) returns (Result) {}
+  rpc UpdateStock(Stock) returns (Result) {}
+  rpc ListStocks(ListStocksRequest) returns (stream Stock) {}
+
+  rpc NewValueDelta(StockValueDelta) returns (Result) {}
+  rpc ListStockValueDeltas(ListStockValueDeltasRequest) returns (stream StockValueDelta) {}
+}
+
+message ListStocksRequest {}
+message ListStockValueDeltasRequest {}
+
+message Stock {
+  string ticker = 1;
+  string name = 2;
+}
+
+// StockValueDelta represents a change of stock price at the specified timestamp
+// e.g. AAPL, 153153153123, +0.11
+// e.g. AAPL, 153153153532, -0.24
+message StockValueDelta {
+  string ticker = 1;
+  int64 timestamp = 2;
+  int64 delta = 3;
+}
+
+message Result {
+  bool success = 1;
+  string message = 2;
+}
