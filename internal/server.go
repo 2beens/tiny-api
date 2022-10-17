@@ -22,8 +22,9 @@ type Server struct {
 
 func NewServer(instanceName string, tseClient tseProto.TinyStockExchangeClient) *Server {
 	return &Server{
-		instanceName: instanceName,
-		reqHandler:   NewRequestHandler(instanceName),
+		instanceName:             instanceName,
+		reqHandler:               NewRequestHandler(instanceName),
+		tinyStockExchangeHandler: NewTinyStockExchangeHandler(instanceName, tseClient),
 	}
 }
 

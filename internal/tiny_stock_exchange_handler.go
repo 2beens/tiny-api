@@ -17,9 +17,13 @@ type TinyStockExchangeHandler struct {
 	tseClient    tseProto.TinyStockExchangeClient
 }
 
-func NewTinyStockExchangeHandler(instanceName string) *TinyStockExchangeHandler {
+func NewTinyStockExchangeHandler(
+	instanceName string,
+	tseClient tseProto.TinyStockExchangeClient,
+) *TinyStockExchangeHandler {
 	return &TinyStockExchangeHandler{
 		instanceName: instanceName,
+		tseClient:    tseClient,
 	}
 }
 
@@ -44,11 +48,17 @@ func (h *TinyStockExchangeHandler) HandleNewStock(w http.ResponseWriter, r *http
 
 	timeoutCtx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
-	h.tseClient.NewStock(timeoutCtx, &tseProto.Stock{
+	res, err := h.tseClient.NewStock(timeoutCtx, &tseProto.Stock{
 		Ticker: ticker,
 		Name:   name,
 	})
+	if err != nil {
+		log.Errorf("add stock: %s", err)
+		pkg.WriteErrorJsonResponse(w, http.StatusBadRequest, err.Error())
+		return
+	}
 
+	log.Printf("add new stock res: %s", res.GetMessage())
 	pkg.WriteJsonResponse(w, http.StatusOK, pkg.ApiResponse{
 		Result:  "ok",
 		Message: fmt.Sprintf("i[%s]: new stock %s added", h.instanceName, ticker),
@@ -56,10 +66,52 @@ func (h *TinyStockExchangeHandler) HandleNewStock(w http.ResponseWriter, r *http
 }
 
 func (h *TinyStockExchangeHandler) HandleNewValueDelta(w http.ResponseWriter, r *http.Request) {
-	// TODO:
+	if err := r.ParseForm(); err != nil {
+		log.Errorf("add new value delta failed, parse form error: %s", err)
+		http.Error(w, "parse form error", http.StatusInternalServerError)
+		return
+	}
 
+	ticker := r.Form.Get("ticker")
+	if ticker == "" {
+		http.Error(w, "error, ticker empty", http.StatusBadRequest)
+		return
+	}
+
+	// TODO: add ticker to delta
+
+	// timestampParam := r.Form.Get("ts")
+	// if timestampParam == "" {
+	// 	http.Error(w, "error, timestamp empty", http.StatusBadRequest)
+	// 	return
+	// }
+	timestamp := 100000
+
+	// deltaParam := r.Form.Get("delta")
+	// if deltaParam == "" {
+	// 	http.Error(w, "error, delta empty", http.StatusBadRequest)
+	// 	return
+	// }
+	delta := 100
+
+	// TODO: timestamp must be int64
+
+	timeoutCtx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	res, err := h.tseClient.NewValueDelta(timeoutCtx, &tseProto.StockValueDelta{
+		Timestamp: int32(timestamp),
+		Delta:     int32(delta),
+	})
+	if err != nil {
+		log.Errorf("add stock: %s", err)
+		pkg.WriteErrorJsonResponse(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	log.Printf("add new stock res: %s", res.GetMessage())
 	pkg.WriteJsonResponse(w, http.StatusOK, pkg.ApiResponse{
 		Result:  "ok",
-		Message: fmt.Sprintf("Hi from instance: %s", h.instanceName),
+		Message: fmt.Sprintf("i[%s]: new value delta for %s added", h.instanceName, ticker),
 	})
 }
