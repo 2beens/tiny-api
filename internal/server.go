@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/2beens/tiny-api/pkg"
+	tseProto "github.com/2beens/tiny-stock-exchange-proto"
+
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
@@ -13,9 +15,12 @@ import (
 type Server struct {
 	instanceName string
 	reqHandler   *RequestHandler
+
+	tseClient                tseProto.TinyStockExchangeClient
+	tinyStockExchangeHandler *TinyStockExchangeHandler
 }
 
-func NewServer(instanceName string) *Server {
+func NewServer(instanceName string, tseClient tseProto.TinyStockExchangeClient) *Server {
 	return &Server{
 		instanceName: instanceName,
 		reqHandler:   NewRequestHandler(instanceName),
@@ -45,6 +50,9 @@ func (s *Server) routerSetup() *mux.Router {
 	router.HandleFunc("/health", s.reqHandler.HandleHealth).Methods("GET")
 	router.HandleFunc("/harakiri", s.reqHandler.HandleHarakiri).Methods("GET")
 	router.HandleFunc("/", s.reqHandler.HandleRootRequest).Methods("GET")
+
+	router.HandleFunc("/tse/stocks", s.tinyStockExchangeHandler.HandleNewStock).Methods("POST")
+	router.HandleFunc("/tse/deltas", s.tinyStockExchangeHandler.HandleNewValueDelta).Methods("POST")
 
 	// add a small middleware function to log request details
 	router.Use(pkg.LogRequest())
