@@ -95,7 +95,45 @@ func (h *TinyStockExchangeHandler) HandleDeleteStock(w http.ResponseWriter, r *h
 	log.Printf("delete stock res: %s", res.GetMessage())
 	pkg.WriteJsonResponse(w, http.StatusOK, pkg.ApiResponse{
 		Result:  "ok",
-		Message: fmt.Sprintf("i[%s]: stock %s delete", h.instanceName, ticker),
+		Message: fmt.Sprintf("i[%s]: stock %s deleted", h.instanceName, ticker),
+	})
+}
+
+func (h *TinyStockExchangeHandler) HandleUpdateStock(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		log.Errorf("update stock failed, parse form error: %s", err)
+		http.Error(w, "parse form error", http.StatusInternalServerError)
+		return
+	}
+
+	ticker := r.Form.Get("ticker")
+	if ticker == "" {
+		http.Error(w, "error, ticker empty", http.StatusBadRequest)
+		return
+	}
+
+	name := r.Form.Get("name")
+	if ticker == "" {
+		http.Error(w, "error, name empty", http.StatusBadRequest)
+		return
+	}
+
+	timeoutCtx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+	res, err := h.tseClient.UpdateStock(timeoutCtx, &tseProto.Stock{
+		Ticker: ticker,
+		Name:   name,
+	})
+	if err != nil {
+		log.Errorf("update stock: %s", err)
+		pkg.WriteErrorJsonResponse(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	log.Printf("update stock res: %s", res.GetMessage())
+	pkg.WriteJsonResponse(w, http.StatusOK, pkg.ApiResponse{
+		Result:  "ok",
+		Message: fmt.Sprintf("i[%s]: stock %s updated", h.instanceName, ticker),
 	})
 }
 
