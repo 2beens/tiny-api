@@ -68,6 +68,37 @@ func (h *TinyStockExchangeHandler) HandleNewStock(w http.ResponseWriter, r *http
 	})
 }
 
+func (h *TinyStockExchangeHandler) HandleDeleteStock(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		log.Errorf("delete stock failed, parse form error: %s", err)
+		http.Error(w, "parse form error", http.StatusInternalServerError)
+		return
+	}
+
+	ticker := r.Form.Get("ticker")
+	if ticker == "" {
+		http.Error(w, "error, ticker empty", http.StatusBadRequest)
+		return
+	}
+
+	timeoutCtx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+	res, err := h.tseClient.RemoveStock(timeoutCtx, &tseProto.Stock{
+		Ticker: ticker,
+	})
+	if err != nil {
+		log.Errorf("delete stock: %s", err)
+		pkg.WriteErrorJsonResponse(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	log.Printf("delete stock res: %s", res.GetMessage())
+	pkg.WriteJsonResponse(w, http.StatusOK, pkg.ApiResponse{
+		Result:  "ok",
+		Message: fmt.Sprintf("i[%s]: stock %s delete", h.instanceName, ticker),
+	})
+}
+
 func (h *TinyStockExchangeHandler) HandleListStocks(w http.ResponseWriter, r *http.Request) {
 	timeoutCtx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
