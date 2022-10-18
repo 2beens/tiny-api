@@ -54,6 +54,7 @@ func (s *Server) routerSetup() *mux.Router {
 
 	router.HandleFunc("/tse/stocks", s.tinyStockExchangeHandler.HandleListStocks).Methods("GET")
 	router.HandleFunc("/tse/stocks", s.tinyStockExchangeHandler.HandleNewStock).Methods("POST")
+	router.HandleFunc("/tse/deltas", s.tinyStockExchangeHandler.HandleListValueDeltas).Methods("GET")
 	router.HandleFunc("/tse/deltas", s.tinyStockExchangeHandler.HandleNewValueDelta).Methods("POST")
 
 	// add a small middleware function to log request details

@@ -85,7 +85,7 @@ func (h *TinyStockExchangeHandler) HandleListStocks(w http.ResponseWriter, r *ht
 			break
 		}
 		if err != nil {
-			log.Errorf("get stocks from stream: %s", err)
+			log.Errorf("get stock from stream: %s", err)
 			pkg.WriteErrorJsonResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
@@ -159,5 +159,43 @@ func (h *TinyStockExchangeHandler) HandleNewValueDelta(w http.ResponseWriter, r 
 	pkg.WriteJsonResponse(w, http.StatusOK, pkg.ApiResponse{
 		Result:  "ok",
 		Message: fmt.Sprintf("i[%s]: new value delta %d for %s added", h.instanceName, delta, ticker),
+	})
+}
+
+func (h *TinyStockExchangeHandler) HandleListValueDeltas(w http.ResponseWriter, r *http.Request) {
+	timeoutCtx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+	stream, err := h.tseClient.ListStockValueDeltas(timeoutCtx, &tseProto.ListStockValueDeltasRequest{})
+	if err != nil {
+		log.Errorf("list value deltas: %s", err)
+		pkg.WriteErrorJsonResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	var deltas []*tseProto.StockValueDelta
+	for {
+		delta, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Errorf("get value delta from stream: %s", err)
+			pkg.WriteErrorJsonResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		deltas = append(deltas, delta)
+	}
+
+	deltasJson, err := json.Marshal(deltas)
+	if err != nil {
+		log.Errorf("marshal value deltas: %s", err)
+		pkg.WriteErrorJsonResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	log.Printf("sending %d value deltas to client", len(deltasJson))
+	pkg.WriteJsonResponse(w, http.StatusOK, pkg.ApiResponse{
+		Result:  "ok",
+		Message: string(deltasJson),
 	})
 }
