@@ -2,7 +2,9 @@ package internal
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -63,6 +65,44 @@ func (h *TinyStockExchangeHandler) HandleNewStock(w http.ResponseWriter, r *http
 	pkg.WriteJsonResponse(w, http.StatusOK, pkg.ApiResponse{
 		Result:  "ok",
 		Message: fmt.Sprintf("i[%s]: new stock %s added", h.instanceName, ticker),
+	})
+}
+
+func (h *TinyStockExchangeHandler) HandleListStocks(w http.ResponseWriter, r *http.Request) {
+	timeoutCtx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+	stream, err := h.tseClient.ListStocks(timeoutCtx, &tseProto.ListStocksRequest{})
+	if err != nil {
+		log.Errorf("list stocks: %s", err)
+		pkg.WriteErrorJsonResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	var stocks []*tseProto.Stock
+	for {
+		stock, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Errorf("get stocks from stream: %s", err)
+			pkg.WriteErrorJsonResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		stocks = append(stocks, stock)
+	}
+
+	stocksJson, err := json.Marshal(stocks)
+	if err != nil {
+		log.Errorf("marshal stocks: %s", err)
+		pkg.WriteErrorJsonResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	log.Printf("sending %d stocks to client", len(stocks))
+	pkg.WriteJsonResponse(w, http.StatusOK, pkg.ApiResponse{
+		Result:  "ok",
+		Message: string(stocksJson),
 	})
 }
 

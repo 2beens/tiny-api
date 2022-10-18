@@ -52,6 +52,7 @@ func (s *Server) routerSetup() *mux.Router {
 	router.HandleFunc("/harakiri", s.reqHandler.HandleHarakiri).Methods("GET")
 	router.HandleFunc("/", s.reqHandler.HandleRootRequest).Methods("GET")
 
+	router.HandleFunc("/tse/stocks", s.tinyStockExchangeHandler.HandleListStocks).Methods("GET")
 	router.HandleFunc("/tse/stocks", s.tinyStockExchangeHandler.HandleNewStock).Methods("POST")
 	router.HandleFunc("/tse/deltas", s.tinyStockExchangeHandler.HandleNewValueDelta).Methods("POST")
 
