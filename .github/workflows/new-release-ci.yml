@@ -57,7 +57,7 @@ jobs:
           echo "committing the change ..."
           git diff | grep '^[+-][^+-]'
           git add --all
-          git commit -m "k8s configs updated for version ${{ github.event.release.tag_name }}"
+          git commit -m "tiny api k8s manifests updated for version ${{ github.event.release.tag_name }}"
 
           # push to master
           echo "pushing the changes ..."
