@@ -23,12 +23,12 @@ func init() {
 func main() {
 	host := flag.String("host", "localhost", "host for the api server")
 	port := flag.String("port", "9001", "port for the api server")
-	instanceName := flag.String("name", "n/a", "name of this tiny api instance")
+	instanceName := flag.String("name", "anon-instance", "name of this tiny api instance")
 	tseHost := flag.String("tsehost", "localhost", "the hostname of the tiny stock exchange grpc server")
 	tsePort := flag.String("tseport", "9002", "the port of the tiny stock exchange grpc server")
 	flag.Parse()
 
-	log.Debugln("tiny API starting ...")
+	log.Debugf("instance %s: tiny API starting ...", *instanceName)
 
 	if envVarHost := os.Getenv("TINY_API_HOST"); envVarHost != "" {
 		*host = envVarHost
@@ -41,6 +41,14 @@ func main() {
 	if envVarInstanceName := os.Getenv("TINY_API_INSTANCE_NAME"); envVarInstanceName != "" {
 		*instanceName = envVarInstanceName
 		log.Debugf("instance name [%s] present in env. var, will use it instead", envVarInstanceName)
+	}
+	if envVarTseHost := os.Getenv("TINY_API_TSE_HOST"); envVarTseHost != "" {
+		*tseHost = envVarTseHost
+		log.Debugf("tiny stock exchange host [%s] present in env. var, will use it instead", envVarTseHost)
+	}
+	if envVarTsePort := os.Getenv("TINY_API_TSE_PORT"); envVarTsePort != "" {
+		*tsePort = envVarTsePort
+		log.Debugf("tiny stock exchange port [%s] present in env. var, will use it instead", envVarTsePort)
 	}
 
 	tseAddr := fmt.Sprintf("%s:%s", *tseHost, *tsePort)
