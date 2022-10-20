@@ -65,7 +65,12 @@ func NewServer(
 // Serve will make a server start listening on provided host and port
 func (s *Server) Serve() {
 	log.Debugf(" > server [%s] listening on: [%s]", s.instanceName, s.httpServer.Addr)
-	log.Fatalf("%s: %s", s.instanceName, s.httpServer.ListenAndServe())
+
+	if err := s.httpServer.ListenAndServe(); err == http.ErrServerClosed {
+		log.Warnf("[%s]: server closed", s.instanceName)
+	} else {
+		log.Fatalf("[%s] listen and serve: %s", s.instanceName, err)
+	}
 }
 
 func (s *Server) routerSetup() *mux.Router {
@@ -99,9 +104,12 @@ func (s *Server) routerSetup() *mux.Router {
 }
 
 func (s *Server) Shutdown() {
+	log.Debugln("server shutting down ...")
 	s.tseConn.Close()
 
 	timeoutCtx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
 	defer cancel()
 	s.httpServer.Shutdown(timeoutCtx)
+
+	log.Debugln("bye, bye ...")
 }
