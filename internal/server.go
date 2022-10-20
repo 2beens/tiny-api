@@ -1,7 +1,10 @@
 package internal
 
 import (
+	"context"
 	"fmt"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"net/http"
 	"time"
 
@@ -16,32 +19,52 @@ type Server struct {
 	instanceName string
 	reqHandler   *RequestHandler
 
+	httpServer *http.Server
+
+	tseConn                  *grpc.ClientConn
 	tseClient                tseProto.TinyStockExchangeClient
 	tinyStockExchangeHandler *TinyStockExchangeHandler
 }
 
-func NewServer(instanceName string, tseClient tseProto.TinyStockExchangeClient) *Server {
-	return &Server{
+func NewServer(
+	instanceName string,
+	host, port string,
+	tseHost, tsePort string,
+) *Server {
+	tseAddr := fmt.Sprintf("%s:%s", tseHost, tsePort)
+	tseConn, err := grpc.Dial(
+		tseAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		log.Fatalf("fail to dial tse connection: %v", err)
+	}
+
+	tseClient := tseProto.NewTinyStockExchangeClient(tseConn)
+
+	s := &Server{
 		instanceName:             instanceName,
 		reqHandler:               NewRequestHandler(instanceName),
+		tseConn:                  tseConn,
+		tseClient:                tseClient,
 		tinyStockExchangeHandler: NewTinyStockExchangeHandler(instanceName, tseClient),
 	}
-}
-
-// Serve will make a server start listening on provided host and port
-func (s *Server) Serve(host, port string) {
-	router := s.routerSetup()
 
 	ipAndPort := fmt.Sprintf("%s:%s", host, port)
-	httpServer := &http.Server{
-		Handler:      router,
+	s.httpServer = &http.Server{
+		Handler:      s.routerSetup(),
 		Addr:         ipAndPort,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
 
-	log.Debugf(" > server [%s] listening on: [%s]", s.instanceName, ipAndPort)
-	log.Fatalf("%s: %s", s.instanceName, httpServer.ListenAndServe())
+	return s
+}
+
+// Serve will make a server start listening on provided host and port
+func (s *Server) Serve() {
+	log.Debugf(" > server [%s] listening on: [%s]", s.instanceName, s.httpServer.Addr)
+	log.Fatalf("%s: %s", s.instanceName, s.httpServer.ListenAndServe())
 }
 
 func (s *Server) routerSetup() *mux.Router {
@@ -64,4 +87,12 @@ func (s *Server) routerSetup() *mux.Router {
 	router.Use(pkg.Cors())
 
 	return router
+}
+
+func (s *Server) Shutdown() {
+	s.tseConn.Close()
+
+	timeoutCtx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
+	defer cancel()
+	s.httpServer.Shutdown(timeoutCtx)
 }

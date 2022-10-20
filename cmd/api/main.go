@@ -2,16 +2,12 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/2beens/tiny-api/internal"
-	tseProto "github.com/2beens/tiny-stock-exchange-proto"
 	log "github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 func init() {
@@ -51,28 +47,17 @@ func main() {
 		log.Debugf("tiny stock exchange port [%s] present in env. var, will use it instead", envVarTsePort)
 	}
 
-	tseAddr := fmt.Sprintf("%s:%s", *tseHost, *tsePort)
-	tseConn, err := grpc.Dial(
-		tseAddr,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	if err != nil {
-		log.Fatalf("fail to dial: %v", err)
-	}
-
-	tseClient := tseProto.NewTinyStockExchangeClient(tseConn)
-
 	chOsInterrupt := make(chan os.Signal, 1)
 	signal.Notify(chOsInterrupt, os.Interrupt, syscall.SIGTERM)
 
-	server := internal.NewServer(*instanceName, tseClient)
+	server := internal.NewServer(*instanceName, *host, *port, *tseHost, *tsePort)
 	go func() {
 		log.Debugf("server will be listening on: %s:%s", *host, *port)
-		server.Serve(*host, *port)
+		server.Serve()
 	}()
 
 	receivedSig := <-chOsInterrupt
 	log.Warnf("interrupt signal [%s] received ...", receivedSig)
 	log.Warnln("server shutdown")
-	tseConn.Close()
+	server.Shutdown()
 }
