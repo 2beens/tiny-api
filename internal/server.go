@@ -30,16 +30,17 @@ func NewServer(
 	instanceName string,
 	host, port string,
 	tseHost, tsePort string,
-) *Server {
+) (*Server, error) {
 	tseAddr := fmt.Sprintf("%s:%s", tseHost, tsePort)
 	tseConn, err := grpc.Dial(
 		tseAddr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		log.Fatalf("fail to dial tse connection: %v", err)
+		return nil, fmt.Errorf("fail to dial tse connection: %w", err)
 	}
 
+	log.Debugf(" > server [%s] grpc addr: [%s]", instanceName, tseAddr)
 	tseClient := tseProto.NewTinyStockExchangeClient(tseConn)
 
 	s := &Server{
@@ -58,7 +59,7 @@ func NewServer(
 		ReadTimeout:  15 * time.Second,
 	}
 
-	return s
+	return s, nil
 }
 
 // Serve will make a server start listening on provided host and port
@@ -81,6 +82,14 @@ func (s *Server) routerSetup() *mux.Router {
 	router.HandleFunc("/tse/stocks", s.tinyStockExchangeHandler.HandleDeleteStock).Methods("DELETE")
 	router.HandleFunc("/tse/deltas", s.tinyStockExchangeHandler.HandleListValueDeltas).Methods("GET")
 	router.HandleFunc("/tse/deltas", s.tinyStockExchangeHandler.HandleNewValueDelta).Methods("POST")
+	router.HandleFunc("/tse/status", func(w http.ResponseWriter, r *http.Request) {
+		connState := s.tseConn.GetState()
+		log.Printf("sending tse grpc conn state: %s", connState.String())
+		pkg.WriteJsonResponse(w, http.StatusOK, pkg.ApiResponse{
+			Result:  "ok",
+			Message: fmt.Sprintf("i[%s]: tse grpc conn state: %s", s.instanceName, connState.String()),
+		})
+	})
 
 	// add a small middleware function to log request details
 	router.Use(pkg.LogRequest())

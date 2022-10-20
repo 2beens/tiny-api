@@ -50,7 +50,10 @@ func main() {
 	chOsInterrupt := make(chan os.Signal, 1)
 	signal.Notify(chOsInterrupt, os.Interrupt, syscall.SIGTERM)
 
-	server := internal.NewServer(*instanceName, *host, *port, *tseHost, *tsePort)
+	server, err := internal.NewServer(*instanceName, *host, *port, *tseHost, *tsePort)
+	if err != nil {
+		log.Fatalf("create server: %s", err)
+	}
 	go func() {
 		log.Debugf("server will be listening on: %s:%s", *host, *port)
 		server.Serve()
