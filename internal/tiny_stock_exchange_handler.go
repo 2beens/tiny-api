@@ -232,9 +232,17 @@ func (h *TinyStockExchangeHandler) HandleNewValueDelta(w http.ResponseWriter, r 
 }
 
 func (h *TinyStockExchangeHandler) HandleListValueDeltas(w http.ResponseWriter, r *http.Request) {
+	ticker := r.URL.Query().Get("ticker")
+	if ticker == "" {
+		http.Error(w, "error, ticker param invalid/missing", http.StatusBadRequest)
+		return
+	}
+
 	timeoutCtx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
-	stream, err := h.tseClient.ListStockValueDeltas(timeoutCtx, &tseProto.ListStockValueDeltasRequest{})
+	stream, err := h.tseClient.ListStockValueDeltas(timeoutCtx, &tseProto.ListStockValueDeltasRequest{
+		Ticker: ticker,
+	})
 	if err != nil {
 		log.Errorf("list value deltas: %s", err)
 		pkg.WriteErrorJsonResponse(w, http.StatusInternalServerError, err.Error())

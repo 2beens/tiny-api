@@ -18,7 +18,9 @@ service TinyStockExchange {
 }
 
 message ListStocksRequest {}
-message ListStockValueDeltasRequest {}
+message ListStockValueDeltasRequest {
+    string ticker = 1;
+}
 
 message Stock {
   string ticker = 1;
