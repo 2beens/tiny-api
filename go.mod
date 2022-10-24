@@ -13,7 +13,7 @@ require (
 )
 
 require (
-	github.com/2beens/tiny-stock-exchange-proto v1.1.0
+	github.com/2beens/tiny-stock-exchange-proto v1.1.1
 	github.com/gorilla/mux v1.8.0
 	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
 	google.golang.org/grpc v1.50.1
